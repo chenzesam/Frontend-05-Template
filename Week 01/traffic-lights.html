@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>红绿灯</title>
+  <style>
+    .light {
+      width: 100px;
+      height: 100px;
+      margin-right: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      background-color: gray;
+    }
+    .light.green.bright {
+      background-color: green;
+    }
+    .light.red.bright {
+      background-color: red;
+    }
+    .light.yellow.bright {
+      background-color: yellow;
+    }
+  </style>
+</head>
+<body>
+  <span class="light green"></span>
+  <span class="light red"></span>
+  <span class="light yellow"></span>
+  <script src="traffic-lights.js"></script>
+</body>
+</html>

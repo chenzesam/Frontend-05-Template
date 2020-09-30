@@ -12,7 +12,7 @@ let chesses = [
   NULL, NULL, NULL
 ];
 
-let curColor = O;
+let curPlayer = O;
 
 // 渲染期盼。
 const render = () => {
@@ -33,71 +33,34 @@ const render = () => {
 
 // 下棋动作。
 const move = (i) => {
-  chesses[i] = curColor;
+  chesses[i] = curPlayer;
   render();
-  if (check(chesses, curColor)) {
-    alert(`${curColor === O ? 'O' : 'X'} 胜利`);
+  if (check(chesses, curPlayer)) {
+    alert(`${curPlayer === O ? 'O' : 'X'} 胜利`);
     return;
   }
-  curColor = curColor === O ? X : O;
+  curPlayer = curPlayer === O ? X : O;
   aiMove();
 }
 
 const aiMove = () => {
-  const p = bestChoice(chesses, curColor).point;
-  console.log('p :>> ', p);
-  console.log('minMax :>> ', minMax(chesses, curColor));
-  chesses[p] = curColor;
+  const bestP = bestChoice(chesses, curPlayer);
+  chesses[bestP] = curPlayer;
   render();
-  if (check(chesses, curColor)) {
-    alert(`${curColor === O ? 'O' : 'X'} 胜利`);
+  if (check(chesses, curPlayer)) {
+    alert(`${curPlayer === O ? 'O' : 'X'} 胜利`);
     return;
   }
-  curColor = curColor === O ? X : O;
-}
-// 当 ai 要走的时候，需要判断剩下的所有情况。基本原则如下：
-// 当 ai 要走的时候，获取最好的结果。当对手要走的时候，获取最坏的结果。
-const bestChoice = (chesses, color) => {
-  const p = willWill(chesses, color);
-  // 如果有可是胜出的点，那么直接选出来。
-  if (p !== -1) {
-    return {
-      point: p,
-      result: 1
-    }
-  }
-  let result = -2;
-  let point = null;
-  // 循环 + 递归判断每种下法最后的结果。
-  for (let i = 0; i < chesses.length; i++) {
-    const chess = chesses[i];
-    if (chess !== NULL) {
-      continue;
-    }
-    const clone = chesses.slice();
-    clone[i] = color;
-    let r = bestChoice(clone, color === O ? X : O).result;
-    // 下一步最不好的结果，证明当前步最好。
-    if (-r > result) {
-      result = -r;
-      point = i;
-    }
-  }
-
-  // 如果 point 为 null，则为和局，result 为 0。
-  return {
-    point,
-    result: point === null ? 0 : result
-  }
+  curPlayer = curPlayer === O ? X : O;
 }
 
 // 检测某个棋是否胜利。
-const check = (chesses, color) => {
+const check = (chesses, player) => {
   // 判断横
   for (let i = 0; i < 3; i++) {
     let win = true;
     for (let j = 0; j < 3; j++) {
-      if (chesses[i * 3 + j] !== color) win = false;
+      if (chesses[i * 3 + j] !== player) win = false;
     }
     if (win) return win;
   }
@@ -106,40 +69,118 @@ const check = (chesses, color) => {
   for (let i = 0; i < 3; i++) {
     let win = true;
     for (let j = 0; j < 3; j++) {
-      if (chesses[j * 3 + i] !== color) win = false;
+      if (chesses[j * 3 + i] !== player) win = false;
     }
     if (win) return win;
   }
   // 判断斜线。
   let win = true;
   for (let i = 0; i < 3; i++) {
-    if (chesses[i * 3 + 2 - i] !== color) win = false;
+    if (chesses[i * 3 + 2 - i] !== player) win = false;
   }
   if (win) return win;
 
   // 判断正斜线。
   win = true;
   for (let i = 0; i < 3; i++) {
-    if (chesses[i * 3 + i] !== color) win = false;
+    if (chesses[i * 3 + i] !== player) win = false;
   }
   if (win) return win;
 
   return false;
 }
 
-const willWill = (chesses, color) => {
+// 判断 player 是否会赢。可废弃
+const willWill = (chesses, player) => {
   for (let i = 0; i < chesses.length; i++) {
     const chess = chesses[i];
     if (chess !== NULL) {
       continue;
     }
     const clone = chesses.slice();
-    clone[i] = color;
-    if (check(clone, color)) {
+    clone[i] = player;
+    if (check(clone, player)) {
       return i;
     }
   }
-
   return -1;
 }
+
+// 找出最好的下棋位置，使用 minimax 算法。
+const bestChoice = (chesses, player) => {
+  let bestResult = -Infinity;
+  let bestMove = null;
+  for (let i = 0; i < chesses.length; i++) {
+    const chess = chesses[i];
+    if (chess !== NULL) {
+      continue
+    }
+    chesses[i] = player;
+    const result = minimax(false, chesses, player === O ? X : O);
+    chesses[i] = NULL;
+    if (result > bestResult) {
+      bestResult = result;
+      bestMove = i;
+    }
+  }
+  return bestMove;
+}
+
+// 判断棋盘是否还有位置可以下。
+const canMove = (chesses) => {
+  for (let i = 0; i < chesses.length; i++) {
+    const chess = chesses[i];
+    if (chess === NULL) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// minimax 算法。
+const minimax = (isMax, chesses, player) => {
+  // 如果是 isMax（AI 下棋 ）赢了，则返回分数 1，否则则代表是对手赢了，AI 得 -1 分。
+  if (check(chesses, player)) {
+    return isMax ? 1 : -1;
+  }
+
+  // 原理同上，如果 AI 输了，则得 -1 分，如果对手输了，则得 1 分。
+  if (check(chesses, player === O ? X : O)) {
+    return isMax ? -1 : 1;
+  }
+
+  // 如果是和局，返回分数 0.
+  if (!canMove(chesses)) {
+    return 0;
+  }
+
+  if (isMax) {
+    let bestResult = -Infinity;
+    for (let i = 0; i < chesses.length; i++) {
+      const chess = chesses[i];
+      if (chess !== NULL) {
+        continue;
+      }
+      chesses[i] = player;
+      const result = minimax(!isMax, chesses, player === O ? X : O);
+      bestResult = Math.max(result, bestResult);
+      chesses[i] = NULL;
+    }
+    return bestResult;
+  } else {
+    let worstResult = Infinity;
+    for (let i = 0; i < chesses.length; i++) {
+      const chess = chesses[i];
+      if (chess !== NULL) {
+        continue;
+      }
+      chesses[i] = player;
+      const result = minimax(!isMax, chesses, player === O ? X : O);
+      worstResult = Math.min(result, worstResult);
+      chesses[i] = NULL;
+    }
+    return worstResult;
+  }
+}
+
 render();
