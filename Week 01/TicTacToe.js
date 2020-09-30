@@ -1,12 +1,16 @@
 const O = Symbol("O");
 const X = Symbol("X");
 const NULL = Symbol("NULL");
+// 几棋游戏，三子棋给 3。
+const rowAndCol = 3;
 
 // 容器
 const container = document.querySelector(".root");
 
-// 已经下了的棋子，1 代表圈，2 代表叉。
-let chesses = [NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL];
+const chesses = [];
+for (let i = 0; i < rowAndCol * rowAndCol; i++) {
+  chesses.push(NULL);
+}
 
 let curPlayer = O;
 
@@ -20,8 +24,7 @@ const render = () => {
     chessDiv.innerText = chess === O ? "O" : chess === X ? "X" : " ";
     chess === NULL && chessDiv.addEventListener("click", () => move(i));
     container.appendChild(chessDiv);
-    // 如果是第三个和第六个，则换行。
-    if ((i + 1) / 3 === 1 || (i + 1) / 3 === 2) {
+    if ((i + 1) % rowAndCol === 0) {
       container.appendChild(document.createElement("br"));
     }
   }
@@ -39,6 +42,7 @@ const move = (i) => {
   aiMove();
 };
 
+// AI 下棋
 const aiMove = () => {
   const bestP = bestChoice(chesses, curPlayer);
   chesses[bestP] = curPlayer;
@@ -53,33 +57,33 @@ const aiMove = () => {
 // 检测某个棋是否胜利。
 const check = (chesses, player) => {
   // 判断横
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < rowAndCol; i++) {
     let win = true;
-    for (let j = 0; j < 3; j++) {
-      if (chesses[i * 3 + j] !== player) win = false;
+    for (let j = 0; j < rowAndCol; j++) {
+      if (chesses[i * rowAndCol + j] !== player) win = false;
     }
     if (win) return win;
   }
 
   // 判断竖
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < rowAndCol; i++) {
     let win = true;
-    for (let j = 0; j < 3; j++) {
-      if (chesses[j * 3 + i] !== player) win = false;
+    for (let j = 0; j < rowAndCol; j++) {
+      if (chesses[j * rowAndCol + i] !== player) win = false;
     }
     if (win) return win;
   }
   // 判断斜线。
   let win = true;
-  for (let i = 0; i < 3; i++) {
-    if (chesses[i * 3 + 2 - i] !== player) win = false;
+  for (let i = 0; i < rowAndCol; i++) {
+    if (chesses[i * rowAndCol + (rowAndCol - 1) - i] !== player) win = false;
   }
   if (win) return win;
 
   // 判断正斜线。
   win = true;
-  for (let i = 0; i < 3; i++) {
-    if (chesses[i * 3 + i] !== player) win = false;
+  for (let i = 0; i < rowAndCol; i++) {
+    if (chesses[i * rowAndCol + i] !== player) win = false;
   }
   if (win) return win;
 
@@ -97,7 +101,14 @@ const bestChoice = (chesses, player) => {
       continue;
     }
     chesses[i] = player;
-    const { result, depth: resultDepth } = minimax(false, chesses, player === O ? X : O, -Infinity, +Infinity, 0);
+    const { result, depth: resultDepth } = minimax(
+      false,
+      chesses,
+      player === O ? X : O,
+      -Infinity,
+      +Infinity,
+      0
+    );
     chesses[i] = NULL;
 
     // 和 minimax 算法同理，AI 是 maximizer，所以取大 result，小 depth。
@@ -133,13 +144,21 @@ const minimax = (isMax, chesses, player, alpha, beta, depth) => {
     return {
       result: isMax ? 1 : -1,
       depth
-    }
+    };
   }
 
   // 原理同上，如果 AI 输了，则得 -1 分，如果对手输了，则得 1 分。
   if (check(chesses, player === O ? X : O)) {
     return {
       result: isMax ? -1 : 1,
+      depth
+    };
+  }
+
+  // 深度太深就认为是和棋，避免一直跑下去。
+  if (depth === 10) {
+    return {
+      result: 0,
       depth
     };
   }
@@ -161,7 +180,14 @@ const minimax = (isMax, chesses, player, alpha, beta, depth) => {
         continue;
       }
       chesses[i] = player;
-      const { result, depth: resultDepth } = minimax(!isMax, chesses, player === O ? X : O, alpha, beta, depth + 1);
+      const { result, depth: resultDepth } = minimax(
+        !isMax,
+        chesses,
+        player === O ? X : O,
+        alpha,
+        beta,
+        depth + 1
+      );
       chesses[i] = NULL;
 
       // maximizer 尽可能的取得最短的胜利路径。
@@ -169,7 +195,7 @@ const minimax = (isMax, chesses, player, alpha, beta, depth) => {
       if (result > bestResult) {
         bestResult = result;
         bestDepth = resultDepth;
-      // 如果是一样的结果，那么就取路径更短的结果。
+        // 如果是一样的结果，那么就取路径更短的结果。
       } else if (result === bestResult) {
         if (resultDepth < bestDepth) {
           bestDepth = resultDepth;
@@ -195,15 +221,22 @@ const minimax = (isMax, chesses, player, alpha, beta, depth) => {
         continue;
       }
       chesses[i] = player;
-      const { result, depth: resultDepth } = minimax(!isMax, chesses, player === O ? X : O, alpha, beta, depth + 1);
+      const { result, depth: resultDepth } = minimax(
+        !isMax,
+        chesses,
+        player === O ? X : O,
+        alpha,
+        beta,
+        depth + 1
+      );
       chesses[i] = NULL;
-      
+
       // minimizer 尽可能的取得最长的胜利路径。
       // 如果结果更坏，那就取这个结果。
       if (result < worstResult) {
         worstResult = result;
         bestDepth = resultDepth;
-      // 如果是一样的结果，那么就取路径更长的结果。
+        // 如果是一样的结果，那么就取路径更长的结果。
       } else if (result === worstResult) {
         if (resultDepth > bestDepth) {
           bestDepth = resultDepth;
@@ -227,7 +260,7 @@ render();
 
 // 以下注释打开，可自动下棋，首棋随机选。
 // (function () {
-//   const random = Math.floor(Math.random() * 8);
+//   const random = Math.floor(Math.random() * (rowAndCol * rowAndCol - 1));
 //   console.log(random)
 //   move(random)
 // })();
