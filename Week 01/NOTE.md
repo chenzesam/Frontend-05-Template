@@ -11,3 +11,7 @@
 ## 红绿灯（traffic-lights）
 
 使用了 async/await 的方式来实现，要注意 sleep 方法需要返回 Promise，不然会直接把 Mac 变成暖宝宝。
+
+## 五子棋
+
+使用 TicTacToe.js，并将 rowAndCol 设置为 5 就可以了。但是由于 25! 的计算量太大了，所以只能添加深度判断，当到了一定深度的时候全部都给和局结果。
