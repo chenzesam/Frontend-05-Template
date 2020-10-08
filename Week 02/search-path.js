@@ -13,34 +13,69 @@ const dirs = [
   [1, -1],  [1, 0],  [1, 1]
 ]
 
-class Sorted {
-  constructor (compare = (a, b) => a - b) {
-    this.data = [];
-    this.compare = compare;
+// class Sorted {
+//   constructor (compare = (a, b) => a - b) {
+//     this.data = [];
+//     this.compare = compare;
+//   }
+
+//   // 获取最小的值
+//   take() {
+//     if (!this.data.length) {
+//       return;
+//     }
+//     let index = 0;
+//     let value = this.data[index];
+
+//     for (let i = 1; i < this.data.length; i++) {
+//       const nextValue = this.data[i];
+//       // 如果前一个值比后一个值的大的话，取后面的小值。
+//       if (this.compare(value, nextValue) > 0) {
+//         index = i;
+//         value = nextValue;
+//       }
+//     }
+//     this.data[index] = this.data[this.data.length - 1];
+//     this.data.pop();
+//     return value;
+//   }
+//   push(value) {
+//     this.data.push(value)
+//   }
+// }
+
+class MinHeap {
+  constructor (fn) {
+    this.data = [null];
+    this.count = 0;
+    this.fn = fn;
   }
 
-  // 获取最小的值
   take() {
-    if (!this.data.length) {
-      return;
+    const top = this.data[1];
+    this.data[1] = this.data[this.count];
+    this.count--;
+    let i = 1;
+    let n = this.count;
+    while (true) {
+      let minPos = i;
+      if (i * 2 <= n && this.fn(this.data[i]) > this.fn(this.data[i * 2])) minPos = i * 2;
+      if (i * 2 + 1 <= n && this.fn(this.data[minPos]) > this.fn(this.data[i * 2 + 1])) minPos = i * 2 + 1;
+      if (minPos == i) break;
+      [this.data[i], this.data[minPos]] = [this.data[minPos], this.data[i]]
+      i = minPos;
     }
-    let index = 0;
-    let value = this.data[index];
-
-    for (let i = 1; i < this.data.length; i++) {
-      const nextValue = this.data[i];
-      // 如果前一个值比后一个值的大的话，取后面的小值。
-      if (this.compare(value, nextValue) > 0) {
-        index = i;
-        value = nextValue;
-      }
-    }
-    this.data[index] = this.data[this.data.length - 1];
-    this.data.pop();
-    return value;
+    return top;
   }
+
   push(value) {
-    this.data.push(value)
+    this.count++;
+    this.data[this.count] = value;
+    let i = this.data.length - 1;
+    while (Math.floor(i / 2) > 0 && this.fn(this.data[i]) < this.fn(this.data[Math.floor(i / 2)])) {
+      [this.data[i], this.data[Math.floor(i / 2)]] = [this.data[Math.floor(i / 2)], this.data[i]];
+      i = Math.floor(i / 2);
+    }
   }
 }
 
@@ -78,14 +113,14 @@ const sleep = (timeout) => {
 
 const find = async (map, startPoint, endPoint) => {
   const [endX, endY] = endPoint;
-  const queue = new Sorted((a, b) => {
-    const [preX, preY] = a;
-    const [nextX, nextY] = b;
-    return distance(preX, preY) - distance(nextX, nextY)
-  });
+  const distance = ([x, y]) => ((x - endX) ** 2 + (y - endY) ** 2);
+  // const queue = new Sorted((a, b) => {
+  //   const [preX, preY] = a;
+  //   const [nextX, nextY] = b;
+  //   return distance(preX, preY) - distance(nextX, nextY)
+  // });
+  const queue = new MinHeap(distance);
   queue.push(startPoint);
-
-  const distance = (x, y) => ((x - endX) ** 2 + (y - endY) ** 2);
 
   const insert = async (point, prePoint) => {
     const [x, y] = point;
