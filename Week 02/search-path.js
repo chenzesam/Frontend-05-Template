@@ -121,19 +121,34 @@ const find = async (map, startPoint, endPoint) => {
   // });
   const queue = new MinHeap(distance);
   queue.push(startPoint);
+  let cost = {};
+  cost[startPoint[0] * 100 + startPoint[1]] = 0;
 
   const insert = async (point, prePoint) => {
     const [x, y] = point;
     if (x < 0 || x > 99 || y < 0 || y > 99) {
       return
     }
-    if (map[x * 100 + y]) {
-      return
+
+    // 黑色的点，则跳过。
+    if (map[x * 100 + y] === 1) return;
+
+    if (typeof path[x * 100 + y] === 'object') {
+      // 如果这个点之前被遍历过来了，则判断它和上一个点的的距离做判断。
+      if (cost[x * 100 + y] > cost[prePoint[0] * 100 + prePoint[1]] + 1) {
+        path[x * 100 + y] = prePoint;
+        cost[x * 100 + y] = cost[prePoint[0] * 100 + prePoint[1]] + 1;
+      }
+      return;
     }
-    map[x * 100 + y] = 1;
-    queue.push([x, y]);
-    path[x * 100 + y] = prePoint;
+
     pointDivs[x * 100 + y].style.backgroundColor = 'lightgreen';
+
+    // map[x * 100 + y] = 1;
+    path[x * 100 + y] = prePoint;
+    cost[x * 100 + y] = cost[prePoint[0] * 100 + prePoint[1]] + 1;
+
+    queue.push([x, y]);
     await sleep(0.01);
   }
 
