@@ -84,6 +84,8 @@ const find = async (map, startPoint, endPoint) => {
   const [endX, endY] = endPoint;
   const [startX, startY] = startPoint;
   const distance = ([x, y]) => ((x - endX) ** 2 + (y - endY) ** 2);
+  // const distance = ([x, y]) => (Math.abs(x - startX) + Math.abs(y - startY) + Math.abs(x - endX) + Math.abs(y - endY));
+
   const queue = new MinHeap(distance);
   queue.push(startPoint);
 
@@ -94,11 +96,10 @@ const find = async (map, startPoint, endPoint) => {
     }
 
     // 黑色的点，则跳过。
-    if (map[x * 100 + y] === 1) return;
+    if (map[x * 100 + y] === 1 || path[x * 100 + y]) return;
 
     pointDivs[x * 100 + y].style.backgroundColor = 'lightgreen';
     path[x * 100 + y] = prePoint;
-    map[x * 100 + y] = 1;
     queue.push([x, y]);
     await sleep(0.01);
   }
