@@ -19,11 +19,18 @@
       height: 601px;
       font-size: 0;
     }
+    .pointInput {
+      width: 50px;
+    }
   </style>
 </head>
 <body>
   <div class="root"></div>
   <button>保存地图</button>
+  起点：<input class="pointInput startInput"><input class="pointInput startInput">
+  终点：<input class="pointInput endInput"><input class="pointInput endInput">
+  <button>开始寻路</button>
+  <button onclick="window.location.reload()">刷新重来</button>
   <script src="./search-path.js"></script>
 </body>
 </html>

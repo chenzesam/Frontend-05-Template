@@ -1,5 +1,8 @@
 const container = document.querySelector('.root');
-const button = document.querySelector('button');
+const saveButton = document.querySelectorAll('button')[0];
+const startButton = document.querySelectorAll('button')[1];
+const startInputs = document.querySelectorAll('.startInput');
+const endInputs = document.querySelectorAll('.endInput');
 const map = JSON.parse(localStorage.getItem('map')) || Array(100 * 100).fill(0);
 const path = [];
 // 存储所有点的 dom 节点。
@@ -112,14 +115,14 @@ const sleep = (timeout) => {
 }
 
 const find = async (map, startPoint, endPoint) => {
+  const [startX, startY] = startPoint;
   const [endX, endY] = endPoint;
-  const distance = ([x, y]) => ((x - endX) ** 2 + (y - endY) ** 2);
-  // const queue = new Sorted((a, b) => {
-  //   const [preX, preY] = a;
-  //   const [nextX, nextY] = b;
-  //   return distance(preX, preY) - distance(nextX, nextY)
-  // });
-  const queue = new MinHeap(distance);
+  // 到起点的代价，如果只用 g 方法，是最短路径。
+  const g = ([x, y]) => Math.sqrt((x - startX) ** 2 + (y - startY) ** 2);
+  // 到终点的预计代价，如果只用 h 方法。是最快搜索算法。
+  const h = ([x, y]) => Math.sqrt((x - endX) ** 2 + (y - endY) ** 2);
+
+  const queue = new MinHeap(point => g(point) + h(point));
   queue.push(startPoint);
   let cost = {};
   cost[startPoint[0] * 100 + startPoint[1]] = 0;
@@ -189,8 +192,20 @@ document.addEventListener('mouseup', () => {
   isMouseDown = false;
 });
 
-button.addEventListener('click', e => {
+saveButton.addEventListener('click', e => {
   localStorage.setItem('map', JSON.stringify(map));
 });
+
+startButton.addEventListener('click', e => {
+  const startPoint = [+startInputs[0].value, +startInputs[1].value];
+  const endPoint = [+endInputs[0].value, +endInputs[1].value];
+  if (map[startPoint[0] * 100 + startPoint[1]] === 1) {
+    alert('起点有障碍，请重新输入')
+  } else if (map[endPoint[0] * 100 + endPoint[1]] === 1) {
+    alert('终点有障碍，请重新输入')
+  } else {
+    find(map, startPoint, endPoint)
+  }
+})
 
 init();
